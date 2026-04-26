@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="ja" style="background:#0a0c0e">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>European Snap Architect</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400&display=swap');
+  :root{
+    --bg:#0a0c0e;--panel:#10141a;--border:#1e2430;--border2:#2e3848;
+    --text:#d0ccd8;--muted:#5a6070;--dim:#202830;
+    --south:#fda4af;--west:#a5f3fc;--north:#93c5fd;--east:#d9f99d;
+    --accent:#c084fc;--mono:'DM Mono',monospace;--serif:'DM Serif Display',serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{background:#0a0c0e}
+  body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px 60px}
+  header{text-align:center;margin-bottom:32px}
+  .eyebrow{font-size:10px;letter-spacing:.4em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  h1{font-family:var(--serif);font-style:italic;font-size:clamp(28px,5vw,46px);color:#fff;font-weight:400;line-height:1.1;margin-bottom:4px}
+  h1 span{color:var(--accent)}
+  .subtitle{font-size:11px;color:var(--muted);margin-top:6px;letter-spacing:.15em}
+  .counter{font-size:10px;color:var(--dim);margin-top:8px;letter-spacing:.2em}
+  .selector-group{width:100%;max-width:680px;margin-bottom:12px}
+  .selector-label{font-size:9px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .selector{display:flex;gap:8px;width:100%}
+  .selector-btn{flex:1;padding:11px 0;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+  .selector-btn:hover{border-color:var(--border2);color:var(--text)}
+  .selector-btn.active-south{border-color:var(--south);color:var(--south);background:#1a0a0e}
+  .selector-btn.active-west{border-color:var(--west);color:var(--west);background:#0a1618}
+  .selector-btn.active-north{border-color:var(--north);color:var(--north);background:#0a1020}
+  .selector-btn.active-east{border-color:var(--east);color:var(--east);background:#141a0a}
+  .frame-btn.active{border-color:var(--accent);color:var(--accent);background:#16101a}
+  .card{width:100%;max-width:680px;background:var(--panel);border:1px solid var(--border);padding:32px;margin-bottom:20px}
+  .empty-state{text-align:center;padding:40px 0;color:var(--dim);font-size:12px;letter-spacing:.05em;line-height:1.7}
+  .fields{display:flex;flex-direction:column;gap:0}
+  .field-row{display:grid;grid-template-columns:110px 1fr auto;gap:12px;align-items:start;padding:12px 0;border-bottom:1px solid var(--border)}
+  .field-row:last-child{border-bottom:none}
+  .field-label{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);padding-top:4px}
+  .field-value{font-family:var(--serif);font-style:italic;font-size:15px;line-height:1.4}
+  .rare-badge{font-family:var(--mono);font-size:8px;letter-spacing:.15em;text-transform:uppercase;padding:1px 6px;border:1px solid currentColor;opacity:.6;margin-left:8px;vertical-align:middle;font-style:normal}
+  .reroll-btn{background:transparent;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:2px 6px;line-height:1;transition:color .15s;flex-shrink:0}
+  .reroll-btn:hover{color:var(--accent)}
+  .divider{border:none;border-top:1px solid var(--border);margin:20px 0}
+  .prompt-label{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .prompt-textarea{width:100%;background:#080a0c;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:11px;line-height:1.9;padding:12px;resize:vertical;min-height:120px;margin-bottom:14px;word-break:break-word}
+  .prompt-textarea:focus{outline:none;border-color:var(--accent)}
+  .copy-btn{background:transparent;border:1px solid var(--border2);color:var(--muted);padding:8px 20px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;font-family:var(--mono);transition:all .2s}
+  .copy-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .copy-btn.copied{border-color:#86efac;color:#86efac}
+  .generate-btn{width:100%;max-width:680px;background:var(--accent);color:#000;font-weight:700;border:none;padding:20px;font-size:12px;letter-spacing:.4em;text-transform:uppercase;cursor:pointer;font-family:var(--mono);transition:all .2s;margin-bottom:12px}
+  .generate-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+  .generate-btn:active{transform:translateY(0)}
+  .save-btn{width:100%;max-width:680px;background:transparent;border:1px solid var(--border);color:var(--muted);padding:12px;font-size:10px;letter-spacing:.25em;text-transform:uppercase;cursor:pointer;font-family:var(--mono);transition:all .2s;margin-bottom:40px}
+  .save-btn:hover{border-color:var(--border2);color:var(--text)}
+  .saved-section{width:100%;max-width:680px}
+  .saved-title{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+  .saved-item{background:var(--panel);border:1px solid var(--border);padding:12px 16px;margin-bottom:8px;font-size:11px;color:var(--muted);line-height:1.7;cursor:pointer;transition:border-color .15s}
+  .saved-item:hover{border-color:var(--border2);color:var(--text)}
+  footer{margin-top:20px;font-size:9px;color:var(--dim);letter-spacing:.2em;text-align:center}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  .animate-in{animation:fadeIn .3s ease forwards}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">AI Prompt Suite · Europe</div>
+  <h1>European Snap <span>Architect</span></h1>
+  <div class="subtitle">Outfit · Scene · Figure · Regional Edition</div>
+  <div class="counter" id="counter">— generated</div>
+</header>
+
+<div class="selector-group">
+  <div class="selector-label">Region</div>
+  <div class="selector">
+    <button class="selector-btn active-south" data-region="south" onclick="setRegion('south')">☀️ South</button>
+    <button class="selector-btn" data-region="west" onclick="setRegion('west')">🌧 West</button>
+    <button class="selector-btn" data-region="north" onclick="setRegion('north')">❄️ North</button>
+    <button class="selector-btn" data-region="east" onclick="setRegion('east')">🌒 East</button>
+  </div>
+</div>
+
+<div class="selector-group">
+  <div class="selector-label">Framing</div>
+  <div class="selector">
+    <button class="selector-btn frame-btn active" onclick="setFraming('full')" id="frame-full">Full Body</button>
+    <button class="selector-btn frame-btn" onclick="setFraming('upper')" id="frame-upper">Upper Body</button>
+    <button class="selector-btn frame-btn" onclick="setFraming('bust')" id="frame-bust">Bust Up</button>
+    <button class="selector-btn frame-btn" onclick="setFraming('close')" id="frame-close">Face Close-up</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="empty-state" id="emptyState">
+    <div style="font-size:32px;margin-bottom:12px;opacity:.4">✦</div>
+    Region と Framing を選んでボタンを押してください<br>衣装・シーン・人物が一度に生成されます
+  </div>
+  <div id="displayFields" class="fields animate-in" style="display:none"></div>
+  <div id="promptBox" style="display:none">
+    <hr class="divider">
+    <div class="prompt-label">画像AIにコピー</div>
+    <textarea class="prompt-textarea" id="finalPrompt" onInput="currentPrompt=this.value"></textarea>
+    <button class="copy-btn" id="copyBtn" onclick="copyPrompt()">Copy Prompt</button>
+  </div>
+</div>
+
+<button class="generate-btn" onclick="generateAll()">GENERATE ARCHITECT</button>
+<button class="save-btn" onclick="savePrompt()" id="saveBtn" style="display:none">SAVE THIS PROMPT</button>
+
+<div class="saved-section" id="savedSection" style="display:none">
+  <div class="saved-title">Saved Prompts</div>
+  <div id="savedList"></div>
+</div>
+
+<footer>European Snap Architect · Regional Edition · GitHub Pages Ready</footer>
+
+<script>
+let currentRegion = "south";
+let currentFraming = "full";
+let generated = 0;
+let currentPrompt = "";
+let lastVals = {};
+
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const pickN = (arr, n) => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a.slice(0, Math.min(n, a.length));
+};
+
+// ==================== OUTFIT DATA ====================
+const STYLES = [
+  // Pan-European
+  "Parisian chic","French girl casual","Left Bank intellectual","Italian tailored","Italian street casual",
+  "Mediterranean summer","Milanese minimal","Roman holiday","Florentine artisan","Venetian romantic",
+  "Scandinavian minimalist","Nordic functional","Swedish clean","Danish hygge aesthetic","Finnish design sensibility",
+  "British prep","East London street","Scottish country","Oxford intellectual","Brighton bohemian",
+  "German functional","Berlin underground","Hamburg harbour casual","Bauhaus inspired","Viennese elegant",
+  "Spanish flamboyant","Barcelona creative","Madrilène night out","Andalusian bohemian",
+  "Greek island casual","Aegean relaxed","Athenian intellectual",
+  "Eastern European grit","Prague vintage","Warsaw cool","Budapest romantic","Bucharest underground",
+  // Universal crossover
+  "dark academia","light academia","cottagecore European","vintage thrift mix","old money European",
+  "quiet luxury","romantic feminine","dark romantic","Victorian inspired","Edwardian influenced",
+  "avant-garde editorial","high fashion editorial","deconstructed tailoring","couture casual",
+  "boho chic","hippie revival","earthy naturalist","festival fashion","art teacher aesthetic",
+  "punk","goth","nu-goth","indie sleaze","e-girl","soft girl","clean girl",
+  "athleisure luxe","elevated sporty","dancer casual","tennis chic","equestrian inspired",
+  "coastal casual","beach club","island resort","maximalist color clash","monochromatic dressing",
+  "tonal dressing","print mixing","museum curator","gallery hopper","café regular"
+];
+
+const TOPS = [
+  // European flavour
+  "linen peasant blouse with embroidery","broderie anglaise cotton top","smocked milkmaid blouse",
+  "fine merino wool turtleneck","cable knit fisherman sweater","Breton stripe marinière",
+  "silk blouse from a Parisian flea market","tailored cotton shirt","Swiss cotton poplin blouse",
+  "Hungarian folk embroidered top","Polish hand-woven linen top","Czech folk pattern blouse",
+  "Mediterranean cotton top in terracotta","Greek fisherman's shirt","Italian linen overshirt",
+  // Universal
+  "fitted ribbed turtleneck","oversized graphic tee","cropped linen shirt","sheer organza blouse",
+  "silk slip top","off-shoulder peasant blouse","structured peplum top","crochet crop top",
+  "halter neck top","bralette with blazer","button-down shirt half-tucked","corset top",
+  "long-sleeve bodysuit","knit tank top","ruffle-front blouse","wrap top in floral print",
+  "striped Breton top","lace-trimmed camisole","satin bias-cut top","hoodie cropped",
+  "Victorian high-neck blouse","cable knit sweater","oversized chunky knit","cropped cardigan",
+  "deep V-neck blouse","poet sleeve blouse","balloon sleeve top","one-shoulder top",
+  "tailored waistcoat","pinstripe vest","embroidered folk blouse","hand-painted tee",
+  "fitted polo shirt","thermal henley","shrunken blazer as top","velvet top","brocade top",
+  "sequined top","metallic knit top","patchwork top","organic cotton tee","hemp linen shirt",
+  "slip dress worn as top","sheer lace top","jacquard blouse","woven cotton top",
+  "sculpted structured top","architectural pleat top","origami fold blouse"
+];
+
+const SEXY_TOPS = [
+  "plunging V-neck silk camisole","backless halter top","sheer lace corset top",
+  "bralette with open blazer","tiny tube top","mesh top","off-shoulder ribbed top",
+  "lace-trim camisole with thin straps","sheer organza shirt unbuttoned","bandeau top",
+  "cutout bodysuit","strappy backless top","corset-style bustier","one-shoulder ruched top",
+  "deep scoop neck tee","velvet corset","criss-cross halter","sheer long-sleeve bodysuit",
+  "micro crop top","cowl neck satin cami","lace bralette as top","tie-front crop top"
+];
+
+const FORMAL_TOPS = [
+  "silk blouse with pussy bow","structured blazer alone","tailored white dress shirt",
+  "beaded evening top","off-shoulder formal blouse in crepe","velvet blazer as top",
+  "brocade peplum top","draped one-shoulder formal","embellished camisole for evening",
+  "classic black fine-knit turtleneck","satin wrap blouse","sequined formal crop",
+  "lace overlay blouse","strapless structured bodice","jacquard brocade top",
+  "silk charmeuse blouse","formal ruffle-front blouse","bow-front silk blouse"
+];
+
+const BOTTOMS = [
+  // European flavour
+  "wide-leg linen trousers in cream","tailored cigarette trousers","high-waist flared jeans",
+  "straight-leg vintage denim","pleated midi skirt in wool","bias-cut satin slip skirt",
+  "tweed A-line skirt","herringbone trousers","houndstooth midi skirt","tartan mini skirt",
+  "corduroy flares","velvet wide-leg trousers","brocade trousers","jacquard skirt",
+  "linen wide-leg trousers","broderie anglaise maxi skirt","folk embroidered skirt",
+  "Scandinavian printed skirt","Czech folk print maxi skirt","Hungarian embroidered midi",
+  // Universal
+  "pleated micro skirt","asymmetric hem skirt","maxi floral skirt","tiered peasant skirt",
+  "wrap skirt in linen","knit pencil skirt","leather mini skirt","faux leather trousers",
+  "moto-style trousers","cargo trousers","drawstring joggers","tailored shorts",
+  "high-waist denim shorts","athletic biker shorts","flowy palazzo trousers","draped trousers",
+  "wide silk trousers","fluid crepe trousers","distressed ripped jeans","patchwork denim",
+  "pinstripe trousers","checked trousers","plaid mini skirt","sports shorts","track pants",
+  "yoga flares","compression leggings","tulle midi skirt","organza layered skirt",
+  "sheer overlay skirt","lace skirt","chiffon maxi skirt","hand-embroidered skirt",
+  "paper bag waist trousers","gathered waist skirt","shirred skirt","smocked midi skirt",
+  "sculpted structured skirt","ribbed midi skirt","crochet skirt","knit flare skirt",
+  "culotte","gaucho trousers","capri trousers","distressed mini","overdyed trousers",
+  "high-waisted yoga leggings","micro denim shorts","high-slit satin maxi skirt",
+  "bodycon mini in faux leather","ultra-short pleated tennis skirt"
+];
+
+const OUTERWEAR = {
+  south: [
+    "lightweight linen blazer","cotton trench in cream","sheer organza jacket","printed silk kimono jacket",
+    "embroidered denim jacket","cropped leather jacket","light cotton bomber","sheer linen duster",
+    "open-weave crochet cardigan","woven cotton overshirt","embroidered folk jacket",
+    "cropped tailored jacket","translucent mesh cover-up","cotton parka in sand"
+  ],
+  west: [
+    "classic trench coat in camel","wool peacoat","Harris tweed blazer","waxed cotton Barbour jacket",
+    "double-breasted wool coat","belted trench in grey","leather biker jacket","corduroy jacket",
+    "quilted gilet layered","velvet blazer","plaid wool blazer","longline wool coat",
+    "herringbone overcoat","duffle coat with toggles","tartan-lined flannel shirt jacket",
+    "oversized camel coat","knit coat","boiled wool jacket","cape coat"
+  ],
+  north: [
+    "long wool overcoat in charcoal","insulated puffer jacket","shearling coat","quilted down coat",
+    "technical ski jacket","fleece-lined coat","faux fur teddy coat","sherpa jacket",
+    "reflective technical jacket","puffer coat in midnight blue","bouclé coat","mohair coat",
+    "cashmere wrap coat","cape coat with dramatic collar","sculptural architectural coat",
+    "Scandinavian functional parka","waterproof anorak","insulated puffer vest","longline parka"
+  ],
+  east: [
+    "oversized military surplus coat","vintage fur-trimmed coat","leather trench coat",
+    "heavy wool overcoat","patchwork coat","boxy Soviet-era style coat","vinyl coat",
+    "metallic puffer","faux fur statement coat","deconstructed oversized coat",
+    "check blanket coat","belted trench in rust","worn leather biker jacket",
+    "quilted padded coat","plaid wool coat","longline duster coat"
+  ]
+};
+
+const FABRICS = [
+  // European textiles
+  "Harris tweed","Donegal tweed","Shetland wool","merino wool","cashmere","mohair",
+  "French linen","Italian linen","Belgian linen","Irish linen","Breton cotton stripe",
+  "Florentine brocade","Venetian velvet","Lyonnaise silk","Alsatian cotton print",
+  "Hungarian embroidery cotton","Polish folk weave","Czech lace","Romanian woven wool",
+  "Scandinavian wool felt","Swedish cotton","Danish design print","Finnish linen",
+  "Andalusian cotton","Greek cotton gauze","Italian silk","Spanish leather",
+  // Universal
+  "silk charmeuse","heavy satin","matte crepe","chiffon","georgette","organza","tulle","lace",
+  "broderie anglaise","eyelet cotton","raw denim","washed denim","stretch denim","coated denim",
+  "soft leather","distressed leather","patent leather","suede","nubuck",
+  "ribbed knit","cable knit","chunky wool knit","fine gauge jersey","waffle knit",
+  "washed linen","heavy cotton canvas","cotton poplin","chambray",
+  "velvet","crushed velvet","velour","corduroy","brocade","herringbone wool","bouclé",
+  "technical nylon","ripstop","mesh fabric","vinyl","PVC","metallic foil fabric",
+  "sheer chiffon overlay","semi-sheer organza","transparent mesh","burnout velvet",
+  "jacquard","tapestry weave","ikat","block-print cotton","tie-dye cotton","ombre fabric",
+  "organic cotton","hemp linen","recycled polyester","bamboo jersey",
+  "sequined fabric","beaded fabric","embroidered fabric","hand-painted fabric",
+  "plaid wool","tartan","houndstooth","windowpane check","pinstripe fabric",
+  "faux fur","sherpa fleece","boiled wool","silk satin","silk taffeta","raw silk"
+];
+
+const COLORS = {
+  south: [
+    "terracotta and cream","burnt sienna and white","warm ochre and sand","deep olive and ivory",
+    "sun-bleached linen and coral","pomegranate red and gold","Mediterranean blue and white",
+    "sage green and terracotta","dusty rose and warm beige","golden amber and off-white",
+    "Tuscan orange and cream","Greek blue and white","Andalusian yellow and terracotta",
+    "sun-faded indigo and natural","warm neutrals in earthy tonal","rust and pale yellow",
+    "deep wine red and cream","cobalt and ivory","mosaic tile blue and white","olive and apricot"
+  ],
+  west: [
+    "charcoal and cream","navy and white","camel and black","burgundy and grey",
+    "forest green and cream","classic black and white","slate grey and blush",
+    "midnight blue and gold","plaid mix of earthy tones","houndstooth black and tan",
+    "Breton navy and white stripe","British racing green and cream","Harris tweed brown and rust",
+    "Parisian grey and nude","French navy and ecru","warm beige tonal",
+    "deep red and charcoal","tartan mixed warm tones","herringbone grey and cream","fog and stone"
+  ],
+  north: [
+    "pure white and ice blue","snow white and silver","pale grey and white","charcoal and pale blue",
+    "deep navy and ice","black and white minimal","pale birch and sky","fog grey and cream",
+    "Scandinavian blue and white","Swedish red and white","midnight and pale gold",
+    "steel blue and white","slate and bone","pure monochrome grey","dark forest and white",
+    "indigo and pale linen","deep teal and silver","graphite and ice","birch and sand","arctic white tonal"
+  ],
+  east: [
+    "deep crimson and black","soviet grey and cream","rust and concrete","deep plum and charcoal",
+    "folk embroidery red and white","Orthodox gold and deep blue","forest green and ochre",
+    "worn denim and clay","tobacco brown and cream","dark olive and amber",
+    "midnight blue and rust","deep burgundy and black","faded red and grey",
+    "mustard and charcoal","dark teal and rust","iron grey and deep red",
+    "earth and bone","worn black and pale","aged linen and dark wood","deep emerald and copper"
+  ]
+};
+
+const ACCESSORIES = [
+  // European specific
+  "silk carré scarf tied at the neck","beret in wool felt","classic french beret","fisherman's cap",
+  "vintage leather satchel","worn leather tote","wicker basket bag","French market basket",
+  "antique brooch on lapel","enamel pin collection","vintage silk headscarf","lace collar detail",
+  "leather gloves in cognac","long wool scarf","tartan wool scarf","merino wool beret",
+  "vintage camera strap bag","canvas tote with literary print","recycled leather crossbody",
+  "amber bead necklace","folk embroidery headband","wooden bead bracelet","silver signet ring",
+  // Universal
+  "pearl hair clip","satin scrunchie","claw clip in tortoiseshell","velvet headband","ribbon tied in hair",
+  "wide-brim felt hat","fascinator","embellished hair pins","braided headband","floral hair crown",
+  "gold hair cuff","jeweled barrette","oversized square sunglasses","cat-eye sunglasses",
+  "round retro sunglasses","slim rectangular shades","tiny oval sunglasses","aviator sunglasses",
+  "oversized tortoiseshell glasses","thin gold wire round glasses","classic black rectangular frames",
+  "clear acetate frames","vintage cat-eye glasses","thick black square frames","rimless oval glasses",
+  "layered gold chains","chunky silver hoops","pearl drop earrings","geometric statement earrings",
+  "mismatched earrings","stacked bangles","charm bracelet","tennis bracelet","cuff bracelet",
+  "dainty ring stack","statement cocktail ring","signet ring","long pendant necklace",
+  "choker necklace","lariat necklace","mini structured bag","slouchy hobo bag",
+  "structured top-handle bag","crossbody chain bag","tote bag in canvas","baguette bag",
+  "clutch in satin","belt bag","backpack in leather","wide leather belt","embroidered belt"
+];
+
+const SHOES = [
+  // European specific
+  "classic leather loafers","Belgian loafers","Oxford brogues","Derby shoes","Chelsea boots",
+  "Dr Martens boots","pointed French kitten heels","Italian leather mules","Spanish espadrilles",
+  "Greek leather sandals","Birkenstock sandals","Swedish clogs","Dutch wooden clogs painted",
+  "Italian leather ballet flats","Roman gladiator sandals","French court shoes",
+  // Universal
+  "pointed-toe kitten heels","block heel mules","strappy heeled sandals","platform heels",
+  "chunky lug-sole boots","knee-high leather boots","over-the-knee boots","ankle boots with buckles",
+  "combat boots","white leather sneakers","chunky platform sneakers","retro running shoes",
+  "canvas high-tops","slip-on sneakers","ballet flats","Mary Jane shoes","penny loafers",
+  "strappy flat sandals","gladiator sandals","thong sandals","espadrille wedges","platform sandals",
+  "Western cowboy boots","riding boots","lace-up Oxford shoes",
+  "mules in suede","backless loafers","slides in leather","fisherman sandals",
+  "woven sandals","leather huaraches","rope-sole sandals","pointed mules","square-toe flats",
+  "round-toe block heels","d'Orsay pumps","slingback heels","thigh-high boots","sock boots",
+  "heeled ankle boots","platform Mary Janes","chunky loafers","creeper shoes",
+  "metallic heels","glitter boots","patent leather pumps","ankle-strap heels","T-bar heels",
+  "cross-strap sandals","barely-there heels","woven leather flats","embroidered boots"
+];
+
+// ==================== SCENE DATA ====================
+const LOCATIONS = {
+  south: [
+    // Streets & Architecture
+    "narrow cobblestone alley in a hilltop Italian village, laundry hanging between buildings, afternoon shadow",
+    "sunlit piazza with a Baroque fountain, pigeons and long shadows at golden hour",
+    "Greek island whitewashed street, bougainvillea spilling over a blue door, harsh midday light",
+    "Andalusian courtyard with orange trees, tilework and dappled shade",
+    "Tuscan vineyard at golden hour, rows of vines and a farmhouse on the hill",
+    "Spanish plaza mayor at siesta time, empty chairs and shuttered cafes",
+    "Amalfi coast road, hairpin curve and blue sea below, afternoon haze",
+    "Moroccan-influenced southern Spanish alley, decorated tiles and iron lanterns",
+    "Cretan village square, old men at a kafeneion, plane tree casting shade",
+    "Sicilian baroque town square, ornate church facade and tourist-free morning",
+    "Lisbon tiled facade, azulejo patterns faded by sun, afternoon light",
+    "Provençal lavender field, purple rows to the horizon, summer haze",
+    "Roman ruins at dusk, ancient columns and long shadows on stone",
+    "Venetian canal at low tide, gondola moored, shuttered windows above",
+    "Santorini clifftop path, white domes and Aegean below, golden hour",
+    "Sardinian beach cove, turquoise water and stone ruins above",
+    "Italian train station waiting hall, light through high windows, marble floor",
+    "Barcelona Gothic Quarter alley, medieval stone and graffiti layered",
+    "Florence leather market, stalls and shadows under loggia arches",
+    "Seville flamenco bar entrance at night, red lanterns and quiet before it opens",
+    // Interiors
+    "trattoria interior at lunchtime, checked tablecloths and wine on the table",
+    "Greek taverna terrace at sunset, whitewashed wall and sea below",
+    "Spanish bodega interior, barrels and low light and chalk menus",
+    "Italian enoteca with bottles floor to ceiling, afternoon light from a small window",
+    "farmhouse kitchen in Puglia, ceramic tiles and dried herbs hanging",
+    "Portuguese pasteleria, marble counter and pastry case, morning light",
+    "old Greek kafeneion, wooden chairs and men playing backgammon, slow afternoon",
+    "Italian leather workshop interior, tools on the wall and smell of hide",
+    "Spanish ceramics workshop, unglazed pots and afternoon dust in the air",
+    "Maltese limestone courtyard, potted geraniums and washing line"
+  ],
+  west: [
+    // Streets & Architecture
+    "rain-slicked Paris boulevard at dusk, cafe lights reflecting on wet stone",
+    "London Victorian terrace street, Georgian doors and empty morning",
+    "Amsterdam canal at golden hour, narrow houses leaning over still water",
+    "Berlin Prenzlauer Berg street, Altbau facades and bike parking everywhere",
+    "Edinburgh Old Town wynd, dark stone and mist from the castle above",
+    "Brussels Art Nouveau facade, ironwork and stained glass, morning light",
+    "Hamburg Speicherstadt warehouse canal, red brick and still water at dusk",
+    "Paris covered passage, glass roof and 19th century shop fronts, quiet afternoon",
+    "London Borough Market, empty stalls before opening, wet cobblestones",
+    "Dublin Georgian square, red doors and iron railings, grey morning",
+    "Copenhagen Nyhavn quayside, coloured houses and boats, overcast afternoon",
+    "Frankfurt Sachsenhausen cider pub street, half-timbered and autumn leaves",
+    "Vienna Naschmarkt at closing, stalls packing up, late afternoon light",
+    "Ghent medieval guildhalls reflected in the canal, blue hour",
+    "Manchester Northern Quarter street art alley, red brick and colour",
+    "Paris Marais courtyard, quiet behind heavy gates, dappled light",
+    "London Notting Hill street, pastel houses and empty morning",
+    "Berlin abandoned industrial space, graffiti and broken glass, grey light",
+    "Bruges medieval street, canal and willows, overcast quiet",
+    "Lyon traboule passageway, silk merchant architecture and silence",
+    // Interiors
+    "Parisian brasserie interior, zinc bar and bentwood chairs, afternoon lull",
+    "London pub interior, dark wood and brass, afternoon light through frosted glass",
+    "Berlin Kneipe, dim light and regulars at the bar, early evening",
+    "Viennese cafe, marble tabletops and newspaper readers, late morning",
+    "Brussels Art Nouveau cafe interior, curved wood and stained glass",
+    "Scottish pub with fireplace, whisky bottles and dark wood, winter evening",
+    "Amsterdam brown cafe, warm light and canal visible through small window",
+    "Paris bistro terrace, wicker chairs and awning, pre-lunch quiet",
+    "London market café, mismatched cups and steamed windows, cold morning",
+    "Dublin literary pub, books on shelves and low light, afternoon pint"
+  ],
+  north: [
+    // Streets & Architecture
+    "Stockholm waterfront at blue hour, pale light on still water and timber buildings",
+    "Norwegian fjord village in winter, wooden houses and snow on the mountains",
+    "Helsinki modernist library exterior, concrete and birch trees, overcast morning",
+    "Copenhagen cycling street, minimal architecture and commuters, grey light",
+    "Reykjavik coloured tin-clad houses, volcanic rock and dramatic sky",
+    "Swedish archipelago summer cottage, red wood and granite rocks by the sea",
+    "Oslo Aker Brygge waterfront, modern glass and grey fjord water, dusk",
+    "Finnish lake in winter, frozen surface and pine forest, low white sun",
+    "Bergen wooden Bryggen wharf, coloured facades and soft rain",
+    "Stockholm Gamla Stan alley, medieval ochre walls and cobblestones, winter morning",
+    "Danish beach in summer, pale sand and low dunes, overcast Nordic light",
+    "Norwegian midnight sun landscape, warm orange light at an impossible hour",
+    "Helsinki tram stop in winter, snow and yellow tram, dark afternoon",
+    "Swedish IKEA-aesthetic suburb, functional and clean, early morning commute",
+    "Faroe Islands cliffside village, grass roofs and vertical rock, mist",
+    "Copenhagen design shop interior, clean lines and daylight, quiet",
+    "Lapland forest in winter, birch trees and deep snow, silence",
+    "Estonian old town Tallinn alley, medieval stone and iron gates, blue hour",
+    "Finnish sauna by a frozen lake, wooden structure and steam, winter dusk",
+    "Gotland island limestone ruins, medieval church remnant and wildflowers, summer",
+    // Interiors
+    "Scandinavian design cafe, white walls and simple wooden furniture, grey morning light",
+    "Norwegian hytte cabin interior, rough wood and wool blankets, firelight",
+    "Swedish folkhem apartment, 1950s functional design and a window of birch trees",
+    "Helsinki design museum cafe, mid-century furniture and flat diffused light",
+    "Danish bakery interior, rye bread and hygge, morning light through steamed windows",
+    "Norwegian fishing village pub, low ceiling and harbour view, storm outside",
+    "Stockholm archipelago summer house interior, painted floors and dried flowers",
+    "Finnish library reading room, Aalto lamps and silence, winter afternoon",
+    "Reykjavik geothermal pool changing room, steam and pale light",
+    "Copenhagen jazz club, low light and smoke, late evening"
+  ],
+  east: [
+    // Streets & Architecture
+    "Prague Old Town square at dawn, baroque facades and empty cobblestones before tourists",
+    "Warsaw Praga district, crumbling Modernist apartment blocks and street art",
+    "Budapest Keleti station interior, socialist-era grandeur and worn tiles",
+    "Bucharest communist-era apartment block street, identical windows and bare trees",
+    "Krakow Jewish Quarter Kazimierz alley, prewar architecture and quiet evening",
+    "Tallinn Soviet-era suburb, concrete panel blocks and a single shop still open",
+    "Sofia tram stop, yellow tram on a wide boulevard, grey morning",
+    "Riga Art Nouveau facade, ornate faces in stone, overcast afternoon",
+    "Belgrade Skadarlija cobblestone bohemian street, old restaurant and ivy",
+    "Sarajevo old bazaar Baščaršija, copper workshops and narrow passages",
+    "Lviv market square, coffee culture and Habsburg architecture, autumn",
+    "Cluj-Napoca park, Art Nouveau pavilion and chestnut trees in autumn",
+    "Bratislava old town square, overlooked and quiet, grey morning",
+    "Vilnius baroque old town, amber coloured plaster and winding streets",
+    "Minsk communist parade boulevard, vast scale and few people, overcast",
+    "Tbilisi balconied old town house, carved wood and vines, sunset",
+    "Kyiv Podil neighbourhood, prewar apartment and linden trees, spring",
+    "Czech countryside village, baroque church and quiet, overcast autumn",
+    "Polish rural road, poplars and flat fields, grey sky",
+    "Hungarian plains puszta, wooden csárda inn and vast horizon, golden hour",
+    // Interiors
+    "Czech pub pivnice interior, wooden benches and foaming beer, afternoon",
+    "Hungarian espresso bar, stand-up counter and strong coffee, morning",
+    "Polish milk bar bar mleczny, canteen trays and socialist-era interior, noon",
+    "Bulgarian rose distillery workshop, copper stills and morning light",
+    "Romanian countryside farmhouse kitchen, painted furniture and wood stove",
+    "Slovak folk craft workshop, painted pottery and afternoon dust",
+    "Serbian rakija bar, small glasses and old men talking, early evening",
+    "Greek Orthodox church interior, gold icons and candle smoke, quiet",
+    "Albanian cafe on a square, plastic chairs and strong coffee, afternoon",
+    "Bosnian traditional cafe džamija, copper coffee pot and low light"
+  ]
+};
+
+const SEASONS = {
+  south: [
+    "peak Mediterranean summer, blinding heat and cicadas","late spring, wildflowers and warm breeze",
+    "golden autumn, harvest and long shadows","mild southern winter, orange trees still fruiting",
+    "olive harvest season, October","lavender season, July heat","grape harvest September",
+    "siesta season, dusty August afternoon","spring almond blossom, February"
+  ],
+  west: [
+    "grey November, wet leaves and early dark","English spring, daffodils and unreliable sun",
+    "Parisian autumn, plane tree leaves on wet stone","German Christmas market season",
+    "Irish summer, perpetually overcast and green","Scottish highland autumn, rust and gold",
+    "Belgian spring, slow and rainy","Dutch tulip season, April","London overcast summer"
+  ],
+  north: [
+    "Scandinavian winter, polar night and snow","white night summer, endless pale light",
+    "Nordic autumn, birch trees turning gold","spring thaw, mud and first light returning",
+    "midsommar, midnight sun and warmth","deep winter, Christmas lights against dark",
+    "early spring, ice still on the lake","late summer, last warmth before dark returns"
+  ],
+  east: [
+    "grey Eastern European winter, snow and Soviet concrete","communist-era nostalgia autumn",
+    "Czech spring, chestnut trees blooming in the old town","Hungarian summer, Balaton lake heat",
+    "Polish autumn, fog and bare linden trees","Bulgarian rose season, May",
+    "Romanian harvest time, October","Slavic winter solstice season, deep dark and tradition"
+  ]
+};
+
+const WEATHER = {
+  south: [
+    "harsh Mediterranean sun, strong shadows and bleached colour","heat shimmer on stone, dry and still",
+    "warm evening after hot day, light softening","sea breeze, thin haze over blue water",
+    "thunderstorm brewing over the hills, air electric","post-rain freshness, stone steaming in sun",
+    "golden hour turning terracotta orange","sirocco dust haze, light diffused and amber"
+  ],
+  west: [
+    "persistent drizzle, everything slightly wet","heavy overcast, flat grey light, no shadows",
+    "rain on cobblestones, reflections everywhere","rare sun breaking through clouds, dramatic shafts",
+    "autumn mist in the morning, burning off slowly","wind-driven rain, umbrellas turning inside out",
+    "just after rain, wet stone and clearing sky","cold grey morning, no drama"
+  ],
+  north: [
+    "polar light, blue and silver, no warmth","heavy snowfall, everything muffled and white",
+    "thin winter sun low on the horizon, long shadows","white night, pale ambient glow at midnight",
+    "Nordic overcast, flat and pale","first frost, everything sharp and still",
+    "Northern Lights visible, green in dark sky","spring thaw, ice cracking on the lake"
+  ],
+  east: [
+    "grey overcast, flat socialist light","heavy rain on concrete, puddles everywhere",
+    "cold clear winter day, breath visible","autumn fog over the river, low and thick",
+    "harsh fluorescent spill from a shop onto wet pavement","unexpected warm sun on cold stone",
+    "snow on unpaved road, tyre tracks and silence","damp spring morning, mud and new leaves"
+  ]
+};
+
+const TIMES = [
+  "golden hour at sunset, long warm shadows","blue hour just after sunset, sky indigo",
+  "early morning, low sun and empty streets","late afternoon, amber and long shadows",
+  "just after sunrise, dew and silence","harsh midday sun, deep shadow",
+  "mid-morning, light building in intensity","late evening, day ending slowly",
+  "3am, only the nightclub stragglers","pre-dawn, sky barely lightening",
+  "twilight, shapes losing definition","overcast midday, flat and grey",
+  "dusk, last ten minutes of light","morning rush hour, everyone moving",
+  "midnight, city quiet or loud depending on the city"
+];
+
+const MOODS = [
+  "quietly beautiful without announcing it","nostalgic and bittersweet, weighted with history",
+  "the feeling of being somewhere very old","wabi-sabi European version: beautiful in its decay",
+  "ordinary European daily life, somehow cinematic","the loneliness of being a foreigner",
+  "warm and slightly melancholic","the last moment before everything changes",
+  "unhurried and deeply present","beautiful in a way only time creates",
+  "the quality of European light that stops you","intimately observed, like a stolen photograph",
+  "the texture of centuries of life being lived","still and charged with past",
+  "a scene a European filmmaker would carry for years"
+];
+
+const CAMERA = [
+  "wide angle 24mm, architecture dominating frame","50mm lens, natural perspective, street level",
+  "85mm portrait lens, shallow depth, background blurred","long telephoto 200mm, compressed alley perspective",
+  "low angle looking up at a facade","high angle looking down at a piazza or street",
+  "locked-off static shot, perfectly composed","handheld, documentary feel, slightly unsteady",
+  "through a window, reflections layered","silhouette against the light",
+  "extreme close-up of texture: stone, tile, iron","slow dolly along an empty street",
+  "bird's eye view from a tower or hill","rack focus from cobblestone to architecture",
+  "Wes Anderson symmetrical dead-centre framing","Sofia Coppola dreamy soft focus, intimate",
+  "Wong Kar-wai blurred motion, neon and longing","Ingmar Bergman stark framing, face and shadow",
+  "Michelangelo Antonioni wide empty architecture","Krzysztof Kieślowski intimate close-up, emotion",
+  "Eric Rohmer natural light, conversation and place","Jacques Tati wide comedic precision"
+];
+
+const STYLE_SCENE = [
+  "35mm film grain, muted European colour palette","Kodak Portra 400, warm and slightly faded",
+  "digital cinema, teal and orange grade","bleach bypass, desaturated and high contrast",
+  "Bruno Barbey street photography, decisive moment","Henri Cartier-Bresson composition, geometry",
+  "Helmut Newton fashion photography, architecture and body","Robert Doisneau Paris romance aesthetic",
+  "contemporary European indie film look","painterly with visible brushwork quality",
+  "infrared photography aesthetic, surreal tones","hyperrealistic CGI, photographic clarity",
+  "long lens compression, layered depth","Super 8 film grain and vignette",
+  "vintage slide film, slightly colour-shifted"
+];
+
+const PERCEPTION = [
+  "slight focus drift, as if the lens is struggling to settle",
+  "subtle temporal lag, movement feels delayed",
+  "soft motion blur lingering after stillness",
+  "light flickers unnaturally, barely perceptible",
+  "colours slightly misaligned, like a memory offset",
+  "depth feels inconsistent, foreground and background blending",
+  "visual noise creeping in like analog signal decay",
+  "frame feels almost still, but not completely frozen",
+  "the horizon line is not quite level, the world slightly tilted",
+  "colour temperature shifts mid-frame, warm to cold without reason",
+  "reflections do not match their sources, reversed or delayed",
+  "edges of the frame feel closer than they should be",
+  "a layer of time visible between present and past"
+];
+
+const CORE_FIXED = "the weight of time visible in a single moment";
+const CORE_VARIATION = [
+  "somewhere beneath this, centuries are watching","the past refuses to stay past here",
+  "as if the camera arrived just in time to see it"
+];
+
+// ==================== FIGURE DATA ====================
+const BODY_POSES = [
+  "standing naturally with weight on one leg","walking gracefully toward camera",
+  "leaning casually against a wall","sitting on steps looking sideways",
+  "standing with hands in pockets","turning around while walking",
+  "sitting on the floor with knees up","standing with arms crossed loosely",
+  "mid-stride dynamic walking pose","relaxed standing pose, looking over shoulder",
+  "leaning forward slightly with interest","standing tall and confident",
+  "sitting on a café chair, one leg crossed","crouching down gently",
+  "standing with one hand on hip","walking away from camera",
+  "sitting with legs crossed elegantly","standing with slight contrapposto",
+  "kneeling on one knee","dancing freely","spinning around",
+  "balancing on one foot","stretching arms upward","hugging own body gently",
+  "squatting playfully","reclining on elbow","standing with legs crossed",
+  "posing with hand on waist","walking with confident stride",
+  "sitting on a low wall or ledge","leaning back relaxed",
+  "standing with arms open wide","posing dramatically with hand on chest",
+  "casual hands behind head","sitting on edge of something",
+  "gentle sway while standing","looking back over shoulder while walking",
+  "hand trailing along a wall while walking","stopping to look at something above",
+  "reading something, head slightly bowed","caught mid-conversation, animated"
+];
+
+const HAND_GESTURES = [
+  "hand gently touching hair","fingers running through hair","one hand resting on cheek",
+  "hand on hip, confident pose","both hands in pockets casually","touching neck softly",
+  "fingers playing with collar or necklace","hand raised near face thoughtfully",
+  "arms crossed loosely","hand resting on collarbone","fingers touching lips",
+  "one hand holding the other arm","hand brushing hair behind ear","fingers tracing jawline",
+  "hand placed on chest emotionally","both hands holding a coffee cup",
+  "hand making a small wave","fingers interlaced in front","one hand touching the back of neck",
+  "hand resting on thigh while sitting","fingers drumming lightly",
+  "hand covering mouth gently","hand adjusting sleeve or cuff","fingers touching ear",
+  "hand on forehead in thought","both hands on hips","one hand touching shoulder",
+  "hand gently holding chin","hand waving goodbye","hand resting on stomach",
+  "one hand behind head","hands clasped together in front","hand touching opposite elbow",
+  "fingers playing with earring","hand resting lightly on chest",
+  "both hands wrapped around a warm cup","hand adjusting scarf or collar",
+  "fingers holding a cigarette elegantly","hand on a railing or wall",
+  "hand shielding eyes from sun","fingers touching a piece of architecture"
+];
+
+const FACIAL_EXPRESSIONS = [
+  "soft gentle smile, eyes slightly narrowed","dreamy distant gaze, lips slightly parted",
+  "playful smirk, one eyebrow raised","serene peaceful look, eyes softly closed",
+  "confident subtle smile, direct eye contact","pensive thoughtful expression, eyes downcast",
+  "bright cheerful open laugh","stoic mysterious look, steady gaze",
+  "gentle curious tilt of the head","cool indifferent expression, slight pout",
+  "tender emotional look, eyes glistening","fierce determined gaze, jaw set",
+  "wistful faraway expression, looking into the distance","surprised delight, eyes wide",
+  "quietly intense, unblinking focus","shy downward glance, small smile",
+  "radiant full smile, eyes crinkled","melancholic half-smile, looking sideways",
+  "amused barely-there smirk","wide-eyed wonder, mouth slightly open",
+  "soft bittersweet smile, eyes slightly wet","confident smize, eyes doing all the work",
+  "candid mid-laugh, eyes squeezed shut","languid heavy-lidded gaze, relaxed",
+  "fresh natural expression, caught off guard","contemplative, gaze drifting upward",
+  "subtle pout, thoughtful and quiet","bright animated expression, eyebrows raised",
+  "tender closed-eye smile","electric direct stare, full presence",
+  "wry knowing smile, one corner lifted","open mouth smile, genuine and warm",
+  "serious composed expression, neutral and still","gentle concern, brow slightly furrowed",
+  "euphoric eyes-closed smile, head tilted back","cheeky grin, chin slightly down",
+  "dreamy soft focus, lost in thought","determined set jaw, calm and ready",
+  "raw vulnerable look, holding something back","light amused expression, barely suppressing a smile"
+];
+
+const LIGHTING = {
+  south: [
+    "harsh Mediterranean noon sun, deep black shadows","golden hour on terracotta, everything orange-warm",
+    "dappled light through olive tree canopy","blue hour over still harbour water",
+    "candlelight in a stone interior, warm and ancient","harsh sun reflected off white walls, near-blinding",
+    "long afternoon shadow on cobblestone","sea-reflected light, rippling and soft",
+    "single bulb in a wine cellar, minimal and warm","morning light through shuttered window, stripes"
+  ],
+  west: [
+    "soft diffused light through heavy clouds, flat and even","warm pub interior glow, amber and intimate",
+    "rain-reflected street light, dramatic and wet","Parisian café window light, warm inside cold outside",
+    "rare shaft of sun through grey clouds, dramatic","street lamp on wet stone, pools of orange",
+    "overcast daylight, even and honest","early morning bakery light, warm against cold outside",
+    "gallery lighting on a face, cool and precise","winter afternoon light, pale and low"
+  ],
+  north: [
+    "polar light, blue-silver and directionless","midnight sun, warm orange at impossible hour",
+    "Northern Lights, green on dark sky","thin winter sun, very low and very long shadows",
+    "candlelight against polar darkness, intimate","snow-reflected ambient light, bright and cold",
+    "design studio north light, even and precise","summer evening diffused light, warm and hazy",
+    "fluorescent light in a concrete interior, harsh","first light of spring returning, pale gold"
+  ],
+  east: [
+    "harsh fluorescent tube light, unforgiving and flat","sodium streetlight on wet concrete, amber",
+    "candle in an Orthodox church, golden smoke","grey morning light on concrete brutalist surface",
+    "single practical bulb in a small room, warm and dark","tram headlight at night, dramatic",
+    "winter sun low on frost, unexpected warmth","market stall lamp at night, pools of colour",
+    "late afternoon through dusty factory window","neon sign on a wet pavement, colour and movement"
+  ]
+};
+
+// ==================== LOGIC ====================
+function setRegion(r) {
+  currentRegion = r;
+  document.querySelectorAll(".selector-btn[data-region]").forEach(b => {
+    b.className = "selector-btn";
+    if (b.dataset.region === r) b.classList.add("active-" + r);
+  });
+}
+
+function setFraming(f) {
+  currentFraming = f;
+  document.querySelectorAll(".frame-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("frame-" + f).classList.add("active");
+}
+
+function reroll(key) {
+  const sources = {
+    style: STYLES, bottom: BOTTOMS, fabric: FABRICS,
+    shoe: SHOES, time: TIMES, mood: MOODS,
+    camera: CAMERA, styleScene: STYLE_SCENE, pose: BODY_POSES,
+    gesture: HAND_GESTURES, expression: FACIAL_EXPRESSIONS,
+  };
+  if (sources[key]) {
+    lastVals[key] = pick(sources[key]);
+  } else if (key === 'top') {
+    lastVals.top = Math.random() < 0.2 ? pick(SEXY_TOPS) : pick(TOPS);
+  } else if (key === 'loc') {
+    lastVals.loc = pick(LOCATIONS[currentRegion]);
+  } else if (key === 'season') {
+    lastVals.season = pick(SEASONS[currentRegion]);
+  } else if (key === 'weather') {
+    lastVals.weather = pick(WEATHER[currentRegion]);
+  } else if (key === 'light') {
+    lastVals.light = pick(LIGHTING[currentRegion]);
+  } else if (key === 'color') {
+    lastVals.color = pick(COLORS[currentRegion]);
+  } else if (key === 'acc') {
+    lastVals.acc = pickN(ACCESSORIES, Math.random() < 0.5 ? 2 : 3).join(", ");
+  } else if (key === 'outer') {
+    lastVals.outer = Math.random() < 0.5 ? pick(OUTERWEAR[currentRegion]) : null;
+  } else if (key === 'perception') {
+    lastVals.perception = Math.random() < 0.35 ? pick(PERCEPTION) : null;
+  }
+  rebuildPromptAndDisplay();
+}
+
+function rebuildPromptAndDisplay() {
+  const v = lastVals;
+  const framingText = { full: "full body shot", upper: "upper body shot from waist up", bust: "bust shot", close: "extreme close-up on face" }[currentFraming];
+  const regionLabel = { south: "Southern Europe", west: "Western Europe", north: "Northern Europe", east: "Eastern Europe" }[currentRegion];
+  const parts = [
+    "young European woman", framingText, v.pose, v.gesture, v.expression, v.light,
+    `wearing ${v.style} style outfit`, v.top, v.bottom,
+    ...(v.outer ? [v.outer] : []),
+    `${v.fabric} fabric`, `color palette: ${v.color}`, `accessories: ${v.acc}`, v.shoe,
+    `location: ${v.loc}`, regionLabel, v.season, v.time, v.weather,
+    `mood: ${v.mood}`, v.camera, v.styleScene,
+    ...(v.perception ? [v.perception] : []),
+    CORE_FIXED, ...(v.variation ? [v.variation] : []),
+    "cinematic Europe, filmic photography, natural light, high detail, texture and time"
+  ];
+  currentPrompt = parts.join(", ");
+  document.getElementById("finalPrompt").value = currentPrompt;
+  renderFields();
+}
+
+function renderFields() {
+  const v = lastVals;
+  const accentColor = { south: "#fda4af", west: "#a5f3fc", north: "#93c5fd", east: "#d9f99d" }[currentRegion];
+  document.getElementById("displayFields").innerHTML = [
+    { label: "Style", value: v.style, color: "#f9a8d4", key: "style" },
+    { label: "Top", value: v.top, color: "#c084fc", key: "top" },
+    { label: "Bottom", value: v.bottom, color: "#c084fc", key: "bottom" },
+    { label: "Outer", value: v.outer || "— none —", color: v.outer ? accentColor : "#2a2535", key: "outer" },
+    { label: "Fabric", value: v.fabric, color: "#fcd34d", key: "fabric" },
+    { label: "Color", value: v.color, color: accentColor, key: "color" },
+    { label: "Accessories", value: v.acc, color: "#86efac", key: "acc" },
+    { label: "Shoes", value: v.shoe, color: "#67e8f9", key: "shoe" },
+    { label: "Scene", value: v.loc, color: "#fda4af", key: "loc" },
+    { label: "Season", value: v.season, color: accentColor, key: "season" },
+    { label: "Time", value: v.time, color: "#fcd34d", key: "time" },
+    { label: "Weather", value: v.weather, color: "#a5f3fc", key: "weather" },
+    { label: "Mood", value: v.mood, color: "#d9f99d", key: "mood" },
+    { label: "Camera", value: v.camera, color: "#fed7aa", key: "camera" },
+    { label: "Figure", value: v.pose, color: "#c084fc", key: "pose" },
+    { label: "Gesture", value: v.gesture, color: "#f9a8d4", key: "gesture" },
+    { label: "Expression", value: v.expression, color: "#86efac", key: "expression" },
+    { label: "Lighting", value: v.light, color: "#fcd34d", key: "light" },
+    ...(v.perception ? [{ label: "Perception", value: v.perception, color: "#c084fc", key: "perception", rare: true }] : []),
+  ].map(f => `
+    <div class="field-row">
+      <div class="field-label">${f.label}</div>
+      <div class="field-value" style="color:${f.color}">
+        ${f.value}${f.rare ? '<span class="rare-badge" style="color:#c084fc">rare</span>' : ''}
+      </div>
+      <button class="reroll-btn" onclick="reroll('${f.key}')" title="Re-roll">🔄</button>
+    </div>
+  `).join("");
+}
+
+function generateAll() {
+  generated++;
+  document.getElementById("counter").textContent = `${generated} generated`;
+  document.getElementById("emptyState").style.display = "none";
+  document.getElementById("displayFields").style.display = "flex";
+  document.getElementById("promptBox").style.display = "block";
+
+  const loc = pick(LOCATIONS[currentRegion]);
+  const season = pick(SEASONS[currentRegion]);
+  const weather = pick(WEATHER[currentRegion]);
+  const time = pick(TIMES);
+  const mood = pick(MOODS);
+  const camera = pick(CAMERA);
+  const styleScene = pick(STYLE_SCENE);
+  const light = pick(LIGHTING[currentRegion]);
+  const perception = Math.random() < 0.35 ? pick(PERCEPTION) : null;
+  const variation = Math.random() < 0.5 ? pick(CORE_VARIATION) : null;
+
+  const style = pick(STYLES);
+  const top = Math.random() < 0.2 ? pick(SEXY_TOPS) : pick(TOPS);
+  const bottom = pick(BOTTOMS);
+  const outer = currentRegion === "south"
+    ? (Math.random() < 0.3 ? pick(OUTERWEAR.south) : null)
+    : (Math.random() < 0.6 ? pick(OUTERWEAR[currentRegion]) : null);
+  const fabric = pick(FABRICS);
+  const color = pick(COLORS[currentRegion]);
+  const acc = pickN(ACCESSORIES, Math.random() < 0.5 ? 2 : 3).join(", ");
+  const shoe = pick(SHOES);
+
+  const framingText = { full: "full body shot", upper: "upper body shot from waist up", bust: "bust shot", close: "extreme close-up on face" }[currentFraming];
+  const pose = pick(BODY_POSES);
+  const gesture = pick(HAND_GESTURES);
+  const expression = pick(FACIAL_EXPRESSIONS);
+
+  lastVals = { style, top, bottom, outer, fabric, color, acc, shoe, loc, season, time, weather, mood, camera, styleScene, light, perception, variation, pose, gesture, expression };
+
+  rebuildPromptAndDisplay();
+  document.getElementById("saveBtn").style.display = "block";
+}
+
+function copyPrompt() {
+  if (!currentPrompt) return;
+  navigator.clipboard.writeText(currentPrompt).then(() => {
+    const btn = document.getElementById("copyBtn");
+    btn.textContent = "Copied ✓"; btn.classList.add("copied");
+    setTimeout(() => { btn.textContent = "Copy Prompt"; btn.classList.remove("copied"); }, 2000);
+  });
+}
+
+function savePrompt() {
+  if (!currentPrompt) return;
+  let saved = JSON.parse(localStorage.getItem("esa_v1") || "[]");
+  if (saved.includes(currentPrompt)) return;
+  saved.unshift(currentPrompt);
+  localStorage.setItem("esa_v1", JSON.stringify(saved.slice(0, 30)));
+  renderSaved();
+}
+
+function renderSaved() {
+  const saved = JSON.parse(localStorage.getItem("esa_v1") || "[]");
+  const section = document.getElementById("savedSection");
+  const list = document.getElementById("savedList");
+  if (saved.length === 0) { section.style.display = "none"; return; }
+  section.style.display = "block";
+  list.innerHTML = saved.map((p, i) => `<div class="saved-item" data-index="${i}">${p}</div>`).join("");
+  document.querySelectorAll(".saved-item").forEach(el => {
+    el.onclick = () => navigator.clipboard.writeText(saved[el.dataset.index]);
+  });
+}
+
+renderSaved();
+</script>
+</body>
+</html>
